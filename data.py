@@ -18,7 +18,7 @@ def file_concat(path):
     for file in files:
         concat_list.append(pd.read_csv("files/"+file,skiprows=2))
     return pd.concat(concat_list,axis=0).drop(37)
-
+    
 def tickers(x):
     """
     tickers function
