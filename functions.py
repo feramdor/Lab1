@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Created on Thu Feb  9 16:34:56 2023
 
@@ -10,7 +9,7 @@ import yfinance as yf
 
 def precios(tickers,start_date, end_date, fechas_consulta):
     """
-    funcion precios
+    Función precios
     ...
     """
     historicos = yf.download(tickers, start = start_date, end = end_date)['Close'] 
@@ -53,7 +52,7 @@ def inversion_pasiva(precios,fechas_consulta,w, cash_w, c_0,tickers):
 
     #Final de procesamiento de inversion pasiva inicial
 
-    out = pd.DataFrame(columns=["Fecha","Portafolio","Rend (%)","Acum"])
+    out = pd.DataFrame(columns = ["Fecha","Portafolio","Rend (%)","Acum"])
     out["Fecha"] = fechas_consulta
     acciones = np.array(df_inicial["Acciones"][:-1])
     invest = precios*acciones
@@ -63,5 +62,5 @@ def inversion_pasiva(precios,fechas_consulta,w, cash_w, c_0,tickers):
     out["Portafolio"] = temp
     out["Rend (%)"] = out["Portafolio"].pct_change()*100
     out["Acum"] = out["Rend (%)"].cumsum()
-    out["Portafolio"][0] = 1e6
+    out["Portafolio"][0] = 1000000
     return out.round(2), df_inicial.round(2)
