@@ -27,4 +27,3 @@ inversion_pasiva, inversion_pasiva_inicial = fn.inversion_pasiva(
     cash_w = w_cash,
     c_0 = 1000000,
     tickers = tickers)
-
