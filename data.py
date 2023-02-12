@@ -47,3 +47,20 @@ def fechasConsultaPasiva():
         "2022-04-29","2022-05-31","2022-06-30","2022-07-29","2022-08-31",
         "2022-09-30","2022-10-31","2022-11-30","2022-12-30","2023-01-25"])
     return f
+
+def tickers_activa():
+    dfAct = pd.read_csv("files/NAFTRAC_20210129.csv", skiprows = 2)
+    tickers = pd.unique(dfAct["Ticker"])[:-1]
+    # DataFrame con precios y pesos 
+    w = pd.DataFrame(columns=["Ticker", "Pond"])
+    w["Ticker"] = tickers
+    # Pesos para cada ticker
+    temp = []
+    for ticker in tickers:
+        weight = dfAct["Peso (%)"][dfAct["Ticker"] == ticker].to_numpy()[0]
+        temp.append(weight)
+    # Añadimos los pesos al DataFrame
+    w["Pond"] = temp
+    w.set_index("Ticker", inplace = True)
+    return tickers, w
+

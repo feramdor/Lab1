@@ -27,3 +27,22 @@ inversion_pasiva, inversion_pasiva_inicial = fn.inversion_pasiva(
     cash_w = w_cash,
     c_0 = 1000000,
     tickers = tickers)
+
+# Inversión Pasiva
+def prices_act(tickers, start_date, end_date):
+    data = yf.download(tickers, start = start_date, end = end_date)["Close"]
+    serie_MXN = yf.download("MXN=X", start = start_date, end = end_date)["Close"]
+    data.reset_index(inplace = True)
+
+    nueva_col = data["Fecha"].dt.tz_localize(None)
+    data["Fecha"] = nueva_col
+    data.set_index("Fecha", inplace = True)
+
+    mxn_consulta = np.zeros(len(nueva_col))
+    MXN = pd.DataFrame(data = serie_MXN)
+    for i in range(len(nueva_col)):
+        mxn_consulta[i] = MXN.loc[nueva_col[i]]
+    data["MXN"] = mxn_consulta
+    return data
+
+

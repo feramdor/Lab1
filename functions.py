@@ -7,9 +7,11 @@ import pandas as pd
 import numpy as np
 import yfinance as yf
 
+# Inversión Pasiva
+
 def precios(tickers,start_date, end_date, fechas_consulta):
     """
-    Función precios
+    Función precios para inversión pasiva
     ...
     """
     historicos = yf.download(tickers, start = start_date, end = end_date)['Close'] 
@@ -64,3 +66,42 @@ def inversion_pasiva(precios,fechas_consulta,w, cash_w, c_0,tickers):
     out["Acum"] = out["Rend (%)"].cumsum()
     out["Portafolio"][0] = 1000000
     return out.round(2), df_inicial.round(2)
+
+# Inversión Activa
+def prices_act(tickers, start_date, end_date):
+    """
+    Función precios para inversión activa
+    """
+    data = yf.download(tickers, start =start_date, end=end_date)["Close"]
+    serie_MXN = yf.download("MXN=X", start =start_date, end=end_date)["Close"]
+    data.reset_index(inplace = True)
+    # Nueva columna sin timezone
+    nueva_col = data["Fecha"].dt.tz_localize(None)
+    data["Fecha"] = nueva_col
+    data.set_index("Fecha", inplace = True)
+    mxn_consulta = np.zeros(len(nueva_col))
+    # Pasamos a DataFrame
+    MXN = pd.DataFrame(data = serie_MXN)
+    for i in range(len(nueva_col)):
+        mxn_consulta[i] = MXN.loc[nueva_col[i]]
+    # Nueva columna de precios de cierre
+    data["MXN"] = mxn_consulta
+    return data
+
+def inversion_activa_inicial(precios, tickers, w, w_cash, c_0):
+    inicial_prices = np.array(precios.iloc[0, :])
+    # Inversion inicial
+    inicial = np.multiply(np.array(w['Pond']) / 100, c_0)
+    # Cash 
+    inicial_cash = 0
+    for i in w_cash['Pond']:
+        inicial_cash = inicial_cash + i / 100 * c_0
+    # Diccionario para inivesion inicial
+    inicial_pos  = {}
+    for i, tikcer in enumerate(tickers):
+        inicial_pos[tikcer] = inicial_cash[i] / inicial_prices[i]
+
+    # Agregamos cash al diccionario
+    inicial_pos['Cash'] = inicial_cash
+    return inicial_pos
+
