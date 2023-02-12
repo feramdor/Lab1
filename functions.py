@@ -105,3 +105,66 @@ def inversion_activa_inicial(precios, tickers, w, w_cash, c_0):
     inicial_pos['Cash'] = inicial_cash
     return inicial_pos
 
+def prices_act(tickers, start_date, end_date):
+    data = yf.download(tickers, start = start_date, end = end_date)["Close"]
+    serie_MXN = yf.download("MXN=X", start = start_date, end = end_date)["Close"]
+    data.reset_index(inplace = True)
+
+    nueva_col = data["Date"].dt.tz_localize(None)
+    data["Date"] = nueva_col
+    data.set_index("Date", inplace = True)
+
+    mxn_consulta = np.zeros(len(nueva_col))
+    MXN = pd.DataFrame(data = serie_MXN)
+    for i in range(len(nueva_col)):
+        mxn_consulta[i] = MXN.loc[nueva_col[i]]
+    data["MXN"] = mxn_consulta
+    return data
+
+# Optimización de portafolio (Eficiente en Mínima Varianza)
+def min_var_por(series_precios):
+    """"
+    Esta función calcula la media y la desviación estándar para cada acción en un portafolio.
+    """
+    # Creamos DataFrame
+    ret_anu = pd.DataFrame(
+        columns = series_precios.columns,
+        index = ['Media', 'DesvEst'])
+    # Media y DesvEst para cada accion 
+    for i in series_precios.columns:
+        ret_anu[i]['Media'] = series_precios[i].mean()
+        ret_anu[i]['DesvEst'] = series_precios[i].std()
+    return ret_anu
+
+def portafolio_EMV(ret_anu, correlacion, rf):
+    """
+    Esta función calcula el portafolio de mínimo varianza (EMV) utilizando la teoría de Markowitz.
+    """
+    # Obtenemos sigma
+    S = np.diag(anual_ret_summ.loc['DesvEst'].values)
+    Sigma = S.dot(corr).dot(S)
+    # Rendimientos esperados individuales
+    E_ind = anual_ret_summ.loc['Media'].values
+    # Función
+    def menos_RS(w, E_ind, Sigma, rf):
+        Ep = E_ind.T.dot(w)
+        sp = (w.T.dot(Sigma).dot(w)) ** 0.5
+        RS = (Ep - rf) / sp
+        return -RS
+    n = len(E_ind)
+    w0 = np.ones((n,)) / n
+    
+    bnds =((0,1),) * n
+    # Restricciones
+    cons = {'type': 'eq', 'fun': lambda w: w.sum() - 1}
+    # Portafolio EMV
+    EMV = minimize(fun = menos_RS,
+                x0 = w0,
+                args = (E_ind, Sigma, rf),
+                bounds = bnds,
+                constraints = cons,
+                tol = 1e-8)
+    w_EMV = EMV.x
+    w_EMV = w_EMV.round(4)
+    E_EMV = Eind.T.dot(w_EMV)
+    s_EMV = (w_EMV.T.dot(Sigma).dot(w_EMV))
